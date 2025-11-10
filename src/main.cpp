@@ -11,6 +11,7 @@
 #include "liblvgl/widgets/lv_btn.h"
 #include "liblvgl/widgets/lv_label.h"
 #include "pros/abstract_motor.hpp"
+#include "pros/adi.hpp"
 #include "pros/imu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
@@ -31,6 +32,9 @@ pros::MotorGroup rightDT({-18,19,20}, pros::MotorGearset::blue);
 pros::Imu IMU(7);
 pros::MotorGroup intake({6}, pros::MotorGearset::blue);
 pros::Rotation yOdom(17);
+pros::MotorGroup upperIntake({-5,16});
+pros::adi::DigitalOut elevate('B');
+
 lemlib::Drivetrain drivetrain(
     &leftDT,
     &rightDT,
@@ -125,17 +129,37 @@ void initialize() {
 }
 void disabled() {}
 void competition_initialize() {}
-void autonomous() {}
+
+ASSET(bl_txt);
+void autonomous() {
+    chassis.setPose(0,0,0);
+    chassis.follow(bl_txt,15,2000);
+}
 void opcontrol() {
     pros::Controller controller(pros::E_CONTROLLER_MASTER);
+    bool up = false;
     while (true) {
-    int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*-1;
-    int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
-    chassis.arcade(leftY, leftX);
+        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*-1;
+        int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        chassis.arcade(leftY, leftX);
 
-    int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
-    intake.move(intakeSpd);
+        int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+        intake.move(intakeSpd);
 
-    pros::delay(10);
-  }
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
+            up = !up;
+        }
+
+        elevate.set_value(up);
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+            upperIntake.move(intakeSpd);
+        } else {
+            upperIntake.move(0);
+        }
+
+
+
+        pros::delay(10);
+    }
 }

@@ -158,15 +158,21 @@ ASSET(bl_txt);
 // time is measured in miliseconds, so 1000 time is 1 second of waiting or timeout time
 // To move the intakes, you can use upperintake.move(pwr); and intake.move(pwr);
 // Motor movement values are between -127 to 127
-void runSelectedAuton(){
+void runSelectedAuton(){ 
     ext.set_value(true);
 
     switch (selectedAUton) {
-        case AUTON_LEFT:
+        case AUTON_LEFT: //You can delete anything inside these parts if needed
             //lines for the left autonomous code goes here
-            chassis.moveToPose(144, 28, 90, 10000);
+            chassis.moveToPose(144, 28, 90, 10000); 
+            //timeout of 10000 means that it'll move on after 10 sec if the point is not reached
             chassis.moveToPose(10, 28, 90, 10000,{.forwards=false},false);
             chassis.moveToPose(0, 0, 0, 10000,{.forwards=false},false);
+
+            upperIntake.move(127); //moves upper intake forwards
+            intake.move(127); //moves lower intake backwards
+            ext.set_value(false); //extends our unloader for the match loaders (its backwards, false is down and true is up)
+            elevate.set_value(true); // expands our upper intake, true is up and false is down
             
             
             //and ends here

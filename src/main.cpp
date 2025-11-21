@@ -28,8 +28,8 @@
 #include "liblvgl/lvgl.h"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup leftDT({-8,9,10}, pros::MotorGearset::blue); 
-pros::MotorGroup rightDT({18,-19,-20}, pros::MotorGearset::blue);
+pros::MotorGroup rightDT({-8,9,10}, pros::MotorGearset::blue); 
+pros::MotorGroup leftDT({18,-19,-20}, pros::MotorGearset::blue);
 pros::Imu IMU(7);
 pros::MotorGroup intake({6}, pros::MotorGearset::blue);
 pros::Rotation yOdom(17);
@@ -56,28 +56,26 @@ lemlib::OdomSensors sensors(
     nullptr,
     &IMU
 );
-lemlib::ControllerSettings lateralController(
-    10,
-    0,
-    3,
-    3,
-    1,
-    100,
-    3,
-    500,
-    20
+lemlib::ControllerSettings lateralController(12, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              3, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
 );
-lemlib::ControllerSettings angularController{
-    2,
-    0,
-    10,
-    3,
-    1,
-    100,
-    3,
-    500,
-    0
-};
+lemlib::ControllerSettings angularController(3, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              10, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
 lemlib::Chassis chassis(
     drivetrain,
     lateralController,
@@ -130,8 +128,6 @@ static void create_home_screen();
 static void create_sensor_screen();
 static void create_auton_screen();
 
-ASSET(bl_txt);
-
 static void autonTest(lv_event_t* e){
     (void)e;
     runGuiAuton = true;
@@ -146,25 +142,50 @@ static void autonTest(lv_event_t* e){
 //
 //
 
+
+ASSET(bl_txt);
+
+
+// Use these statements to code the autons: 
+// chassis.moveToPose(x, y, angle, timeout);
+// chassis.moveToPoint(x, y, timeout);
+// Timeout just means the time it'll take for it to move on if the desired position is not reached
+// x, y, and angle is just the x, y, and t shown on the screen (Measured in inches and degrees)
+// !! ALL lines end with a semicolon ; !!
+// You can include the ",{.forwards=false},false" after the timeout if you need the robot to follow the path backwards
+// Move around the robot to desired positions & then record their points in the respective autonomous sections
+// You can tell the program to wait for an amount of time by using pros::delay(time)
+// time is measured in miliseconds, so 1000 time is 1 second of waiting or timeout time
+// To move the intakes, you can use upperintake.move(pwr); and intake.move(pwr);
+// Motor movement values are between -127 to 127
 void runSelectedAuton(){
-    chassis.setPose(0,0,0);
     ext.set_value(true);
 
     switch (selectedAUton) {
         case AUTON_LEFT:
-            chassis.moveToPoint(10, 10, 2000);
+            //lines for the left autonomous code goes here
+            chassis.moveToPose(144, 28, 90, 10000);
+            chassis.moveToPose(10, 28, 90, 10000,{.forwards=false},false);
+            chassis.moveToPose(0, 0, 0, 10000,{.forwards=false},false);
+            
+            
+            //and ends here
             break;
         case AUTON_RIGHT:
+            //lines for the right autonomous code goes here
             leftDT.move(127);
             rightDT.move(127);
             pros::delay(1000);
             leftDT.move(0);
             rightDT.move(0);
+            //and ends here
             break;
         case AUTON_SKILLS:
-            chassis.follow(bl_txt, 5, 2000);
+            //lines for the skills autonomous code goes here
+
+            //and ends here
             break;
-        default:
+        default: //nothing goes in default
             break;
     }
 }
@@ -193,7 +214,6 @@ static void on_backHome(lv_event_t* e){
     lv_scr_load(homeScreen);
 }
 static void on_resetSensors(lv_event_t* e){
-    IMU.tare();
     yOdom.reset_position();
     chassis.setPose(0,0,0);
 }
@@ -294,10 +314,6 @@ static void create_sensor_screen(){
     lv_obj_t* backlabel = lv_label_create(sensorBackButton);
     lv_label_set_text(backlabel, "Back");
     lv_obj_center(backlabel);
-
-    lv_obj_t* motor1Label = lv_label_create(motor1Label);
-    lv_label_set_text(motor1Label, "Y: 0.0 deg");
-    lv_obj_align(sensorWheelLabel, LV_ALIGN_TOP_LEFT, 10, 60);
 }
 
 static void create_auton_screen(){ //actually the debug screen
@@ -357,6 +373,9 @@ void initialize() {
     initGui();
     chassis.calibrate();
 
+    leftDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    rightDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+
     ui_update = new pros::Task(updatePose, nullptr, "UI Update Task");
 }
 
@@ -373,7 +392,7 @@ void opcontrol() {
         }
         if(!autonActive){
             int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-            int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*-1;
+            int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
             chassis.curvature(leftY, leftX);
 
             int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);

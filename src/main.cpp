@@ -19,6 +19,7 @@
 #include "pros/motor_group.hpp"
 #include "liblvgl/lvgl.h"
 #include "pros/motors.h"
+#include "pros/motors.hpp"
 #include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
 #include "pros/screen.hpp"
@@ -28,12 +29,14 @@
 #include "liblvgl/lvgl.h"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup leftDT({-8,9,10}, pros::MotorGearset::blue); 
-pros::MotorGroup rightDT({18,-19,-20}, pros::MotorGearset::blue);
+pros::MotorGroup rightDT({-8,9,10}, pros::MotorGearset::blue); 
+pros::MotorGroup leftDT({18,-19,-20}, pros::MotorGearset::blue);
 pros::Imu IMU(7);
 pros::MotorGroup intake({6}, pros::MotorGearset::blue);
 pros::Rotation yOdom(17);
-pros::MotorGroup upperIntake({-5,16});
+pros::MotorGroup upperIntake({-5});
+pros::Motor upintake(-5);
+pros::MotorGroup rotateIntake({16});
 pros::adi::DigitalOut elevate('B');
 pros::adi::DigitalOut ext('A');
 
@@ -56,28 +59,26 @@ lemlib::OdomSensors sensors(
     nullptr,
     &IMU
 );
-lemlib::ControllerSettings lateralController(
-    10,
-    0,
-    3,
-    3,
-    1,
-    100,
-    3,
-    500,
-    20
+lemlib::ControllerSettings lateralController(8, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              3, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
 );
-lemlib::ControllerSettings angularController{
-    2,
-    0,
-    10,
-    3,
-    1,
-    100,
-    3,
-    500,
-    0
-};
+lemlib::ControllerSettings angularController(3, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              10, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
 lemlib::Chassis chassis(
     drivetrain,
     lateralController,
@@ -130,8 +131,6 @@ static void create_home_screen();
 static void create_sensor_screen();
 static void create_auton_screen();
 
-ASSET(bl_txt);
-
 static void autonTest(lv_event_t* e){
     (void)e;
     runGuiAuton = true;
@@ -146,25 +145,66 @@ static void autonTest(lv_event_t* e){
 //
 //
 
+
+ASSET(bl_txt);
+
 void runSelectedAuton(){
-    chassis.setPose(0,0,0);
     ext.set_value(true);
 
     switch (selectedAUton) {
         case AUTON_LEFT:
-            chassis.moveToPoint(10, 10, 2000);
+            //lines for the left autonomous code goes here
+            chassis.moveToPoint(0, 48, 5000,{.maxSpeed=40});
+            chassis.moveToPose(0, 52.49, 45, 3000,{.maxSpeed=40});
+            intake.move_velocity(-127);
+            pros::delay(3000);
+            intake.move(-30);
+            chassis.moveToPoint(3, 54, 2000);
+            chassis.moveToPoint(-1, 45, 2000,{.forwards=false});
+            
+            
+            //and ends here
             break;
         case AUTON_RIGHT:
-            leftDT.move(127);
-            rightDT.move(127);
-            pros::delay(1000);
-            leftDT.move(0);
-            rightDT.move(0);
+            chassis.moveToPoint(0, -45.82, 5000,{.forwards = false,.maxSpeed=40}, false);
+            chassis.turnToHeading(-45, 3000,{.maxSpeed=30});
+            chassis.moveToPoint(7.32, -52.72, 750, {.forwards = false,.minSpeed=150}, false);
+            //and ends here
             break;
         case AUTON_SKILLS:
-            chassis.follow(bl_txt, 5, 2000);
+            chassis.moveToPoint(-17.27, -32.25, 2000,{.forwards=false});
+            chassis.turnToHeading(-43, 1000);
+            chassis.moveToPoint(-8.89, -38.43, 1000,{.forwards=false,.minSpeed=127});
+            chassis.moveToPoint(-50, -1.18, 2000);
+            chassis.turnToHeading(0, 1000);
+            ext.set_value(false);
+            chassis.moveToPoint(-50, 9.6, 1000,{.minSpeed=65});
+            intake.move(127);
+            upperIntake.move(127);
+            pros::delay(5000);
+            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
+            chassis.moveToPoint(-50, 12.6, 1000, {.forwards=true,.minSpeed=100});
+            pros::delay(3000);
+            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
+            chassis.moveToPoint(-50, 12.6, 1000, {.forwards=true,.minSpeed=100});
+            pros::delay(3000);
+            intake.move(0);
+            upperIntake.move(0);
+            ext.set_value(true);
+            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
+            chassis.turnToHeading(96, 1000);
+            chassis.moveToPose(2, -25, 180,7000,{.minSpeed=70});
+            pros::delay(2500);
+            chassis.turnToHeading(180, 2000);
+            chassis.moveToPoint(0, 25,5000,{.forwards=false,.minSpeed=200});
+
+
+
+
+
+            //and ends here
             break;
-        default:
+        default: //nothing goes in default
             break;
     }
 }
@@ -193,7 +233,6 @@ static void on_backHome(lv_event_t* e){
     lv_scr_load(homeScreen);
 }
 static void on_resetSensors(lv_event_t* e){
-    IMU.tare();
     yOdom.reset_position();
     chassis.setPose(0,0,0);
 }
@@ -294,10 +333,6 @@ static void create_sensor_screen(){
     lv_obj_t* backlabel = lv_label_create(sensorBackButton);
     lv_label_set_text(backlabel, "Back");
     lv_obj_center(backlabel);
-
-    lv_obj_t* motor1Label = lv_label_create(motor1Label);
-    lv_label_set_text(motor1Label, "Y: 0.0 deg");
-    lv_obj_align(sensorWheelLabel, LV_ALIGN_TOP_LEFT, 10, 60);
 }
 
 static void create_auton_screen(){ //actually the debug screen
@@ -357,6 +392,9 @@ void initialize() {
     initGui();
     chassis.calibrate();
 
+    leftDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    rightDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+
     ui_update = new pros::Task(updatePose, nullptr, "UI Update Task");
 }
 
@@ -370,15 +408,20 @@ void opcontrol() {
             runGuiAuton = false;
             runSelectedAuton();
             autonActive = false;
+            if(selectedAUton==AUTON_SKILLS){
+                pros::delay(90000);
+            } else {
+                pros::delay(15000);
+            }
+                
         }
         if(!autonActive){
-            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-            int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*-1;
-            chassis.curvature(leftY, leftX);
+            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*1.3;
+            int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*1.3;
+            chassis.arcade(leftY, leftX);
 
             int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
             intake.move(intakeSpd);
-
             if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
                 up = !up;
             }
@@ -391,8 +434,14 @@ void opcontrol() {
 
             if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
                 upperIntake.move(intakeSpd);
+                if(up){
+                    rotateIntake.move(intakeSpd);
+                } else {
+                    rotateIntake.move(0);
+                }
             } else {
                 upperIntake.move(0);
+                rotateIntake.move(0);
             }
 
         }

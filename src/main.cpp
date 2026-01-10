@@ -395,6 +395,9 @@ void initialize() {
     leftDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
     rightDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
 
+    leftDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    rightDT.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+
     ui_update = new pros::Task(updatePose, nullptr, "UI Update Task");
 }
 

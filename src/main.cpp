@@ -154,21 +154,25 @@ void runSelectedAuton(){
     switch (selectedAUton) {
         case AUTON_LEFT:
             //lines for the left autonomous code goes here
-            chassis.moveToPoint(0, 48, 5000,{.maxSpeed=40});
-            chassis.moveToPose(0, 52.49, 45, 3000,{.maxSpeed=40});
+            chassis.moveToPoint(0, 48, 5000,{.maxSpeed=40},false);
+            chassis.moveToPose(0, 52.49, -45, 3000,{.maxSpeed=40});
             intake.move_velocity(-127);
             pros::delay(3000);
-            intake.move(-30);
-            chassis.moveToPoint(3, 54, 2000);
-            chassis.moveToPoint(-1, 45, 2000,{.forwards=false});
+            intake.move(-100);
+            chassis.moveToPoint(-3.5, 52, 2000);
+            chassis.moveToPoint(32.55, 14.92, 2000,{.forwards=false});
+            chassis.turnToHeading(-180, 1000);
+            ext.set_value(false);
+            intake.move(127);
+            chassis.moveToPoint(32.93, -1, 2000,{.minSpeed=100});
             
             
             //and ends here
             break;
         case AUTON_RIGHT:
             chassis.moveToPoint(0, -45.82, 5000,{.forwards = false,.maxSpeed=40}, false);
-            chassis.turnToHeading(-45, 3000,{.maxSpeed=30});
-            chassis.moveToPoint(7.32, -52.72, 750, {.forwards = false,.minSpeed=150}, false);
+            chassis.turnToHeading(45, 3000,{.maxSpeed=30});
+            chassis.moveToPoint(-7.32, -52.72, 750, {.forwards = false,.minSpeed=150}, false);
             //and ends here
             break;
         case AUTON_SKILLS:

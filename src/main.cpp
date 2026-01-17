@@ -28,6 +28,7 @@
 #include <string>
 #include "liblvgl/lvgl.h"
 
+//Initializing ports
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup rightDT({-8,9,10}, pros::MotorGearset::blue); 
 pros::MotorGroup leftDT({18,-19,-20}, pros::MotorGearset::blue);
@@ -36,13 +37,14 @@ pros::MotorGroup intake({6}, pros::MotorGearset::blue);
 pros::Rotation yOdom(17);
 pros::MotorGroup upperIntake({-5});
 pros::Motor upintake(-5);
-pros::MotorGroup rotateIntake({16});
+pros::MotorGroup rotateIntake({15});
 pros::adi::DigitalOut elevate('B');
 pros::adi::DigitalOut ext('A');
 
 bool runGuiAuton = false;
 bool autonActive = false;
 
+//Lemlib and PID configs
 lemlib::Drivetrain drivetrain(
     &leftDT,
     &rightDT,
@@ -136,24 +138,43 @@ static void autonTest(lv_event_t* e){
     runGuiAuton = true;
 }
 
-//
-//
-//
-//             LOOK HERE!!!!
-//       VVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-//
-//
-//
-
-
 ASSET(bl_txt);
 
 void runSelectedAuton(){
-    ext.set_value(true);
+    ext.set_value(false);
+    elevate.set_value(true);
 
     switch (selectedAUton) {
-        case AUTON_LEFT:
-            //lines for the left autonomous code goes here
+        case AUTON_LEFT: //tested and has hit once: Scores 2-4 blocks on long goal, then scores 1-2 on mid goal
+            elevate.set_value(false);
+            chassis.moveToPose(1.16, 38.52, 1.33, 2000,{.minSpeed=70},false);
+            ext.set_value(true);
+            chassis.turnToHeading(-90, 2000,{},false);
+            chassis.moveToPoint(-15, 38.57, 1000,{.minSpeed=120},false);
+            intake.move(127);
+            pros::delay(750);
+            chassis.moveToPoint(5, 38.52, 1000, {.forwards=false});
+            pros::delay(500);
+            chassis.moveToPoint(-5, 38.52, 2000,{.maxSpeed=30});
+            pros::delay(2000);
+            
+            chassis.turnToHeading(86, 1000,{},false);
+            ext.set_value(false);
+            pros::delay(250);
+            chassis.moveToPoint(17.3, 37.51, 1000,{},false);
+            chassis.turnToHeading(86, 500);
+            upperIntake.move(127);
+            rotateIntake.move(127);
+            pros::delay(4000);
+            upperIntake.move(0);
+            elevate.set_value(true);
+            chassis.moveToPoint(0, 37.51, 1000,{.forwards=false});
+            chassis.moveToPose(35.24, 5.05, 135, 5000);
+            upperIntake.move(127);
+            
+            
+            break;
+        case AUTON_RIGHT: //tested and works: Scores one on low goal and moves to match loader
             chassis.moveToPoint(0, 48, 5000,{.maxSpeed=40},false);
             chassis.moveToPose(0, 52.49, -45, 3000,{.maxSpeed=40});
             intake.move_velocity(-127);
@@ -165,17 +186,8 @@ void runSelectedAuton(){
             ext.set_value(false);
             intake.move(127);
             chassis.moveToPoint(32.93, -1, 2000,{.minSpeed=100});
-            
-            
-            //and ends here
             break;
-        case AUTON_RIGHT:
-            chassis.moveToPoint(0, -45.82, 5000,{.forwards = false,.maxSpeed=40}, false);
-            chassis.turnToHeading(45, 3000,{.maxSpeed=30});
-            chassis.moveToPoint(-7.32, -52.72, 750, {.forwards = false,.minSpeed=150}, false);
-            //and ends here
-            break;
-        case AUTON_SKILLS:
+        case AUTON_SKILLS: //Kinda works, the middle part could hit if it lands in the right way
             chassis.moveToPoint(-17.27, -32.25, 2000,{.forwards=false});
             chassis.turnToHeading(-43, 1000);
             chassis.moveToPoint(-8.89, -38.43, 1000,{.forwards=false,.minSpeed=127});
@@ -201,27 +213,11 @@ void runSelectedAuton(){
             pros::delay(2500);
             chassis.turnToHeading(180, 2000);
             chassis.moveToPoint(0, 25,5000,{.forwards=false,.minSpeed=200});
-
-
-
-
-
-            //and ends here
             break;
-        default: //nothing goes in default
+        default: 
             break;
     }
 }
-
-//
-//
-//
-//
-//          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//
-//
-//
-//
 
 void autonomous() {
     runSelectedAuton();
@@ -408,8 +404,15 @@ void initialize() {
 void opcontrol() {
     pros::Controller controller(pros::E_CONTROLLER_MASTER);
     bool up = false;
-    bool extract = true;
+    bool extract = false;
+    int count = 0;
     while (true) {
+        count += 1;
+        if(count > 5){
+            count = 0;
+            master.set_text(0,0, autonNames[selectedAUton]);
+        }
+        
         if(runGuiAuton && !autonActive){
             autonActive = true;
             runGuiAuton = false;
@@ -429,6 +432,17 @@ void opcontrol() {
 
             int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
             intake.move(intakeSpd);
+
+            if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){
+                master.clear_line(0);
+                selectedAUton = (selectedAUton-1+AUTON_COUNT)%AUTON_COUNT;
+                lv_label_set_text_static(autonNameLabel, autonNames[selectedAUton]);
+            }else if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)){
+                master.clear_line(0);
+                selectedAUton = (selectedAUton+1) % AUTON_COUNT;
+                lv_label_set_text(autonNameLabel, autonNames[selectedAUton]);
+            }
+
             if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
                 up = !up;
             }
@@ -441,11 +455,7 @@ void opcontrol() {
 
             if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
                 upperIntake.move(intakeSpd);
-                if(up){
-                    rotateIntake.move(intakeSpd);
-                } else {
-                    rotateIntake.move(0);
-                }
+                rotateIntake.move(intakeSpd);
             } else {
                 upperIntake.move(0);
                 rotateIntake.move(0);

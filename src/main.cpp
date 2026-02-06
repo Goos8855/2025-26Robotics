@@ -188,31 +188,37 @@ void runSelectedAuton(){
             chassis.moveToPoint(32.93, -1, 2000,{.minSpeed=100});
             break;
         case AUTON_SKILLS: //Kinda works, the middle part could hit if it lands in the right way
-            chassis.moveToPoint(-17.27, -32.25, 2000,{.forwards=false});
-            chassis.turnToHeading(-43, 1000);
-            chassis.moveToPoint(-8.89, -38.43, 1000,{.forwards=false,.minSpeed=127});
-            chassis.moveToPoint(-50, -1.18, 2000);
-            chassis.turnToHeading(0, 1000);
-            ext.set_value(false);
-            chassis.moveToPoint(-50, 9.6, 1000,{.minSpeed=65});
             intake.move(127);
             upperIntake.move(127);
-            pros::delay(5000);
-            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
-            chassis.moveToPoint(-50, 12.6, 1000, {.forwards=true,.minSpeed=100});
-            pros::delay(3000);
-            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
-            chassis.moveToPoint(-50, 12.6, 1000, {.forwards=true,.minSpeed=100});
-            pros::delay(3000);
-            intake.move(0);
-            upperIntake.move(0);
+            elevate.set_value(false);
             ext.set_value(true);
-            chassis.moveToPoint(-50, 0, 500,{.forwards=false});
-            chassis.turnToHeading(96, 1000);
-            chassis.moveToPose(2, -25, 180,7000,{.minSpeed=70});
-            pros::delay(2500);
-            chassis.turnToHeading(180, 2000);
-            chassis.moveToPoint(0, 25,5000,{.forwards=false,.minSpeed=200});
+            chassis.moveToPoint(0, 49, 2000);
+            chassis.turnToHeading(-90, 1000);
+            chassis.moveToPose(-20, 49, -90, 1500,{.minSpeed=100});
+            pros::delay(3000);
+            chassis.moveToPoint(0, 49, 2000,{.forwards=false});
+            chassis.moveToPose(-20, 49, -90, 1500,{.minSpeed=100});
+            pros::delay(3000);
+            chassis.moveToPoint(8, 50, 1000,{.forwards=false});
+            ext.set_value(false);
+            intake.move(-127);
+            upperIntake.move(-127);
+            pros::delay(3000);
+            chassis.turnToHeading(180, 1000);
+            ext.set_value(true);
+            intake.move(127);
+            upperIntake.move(127);
+            chassis.moveToPoint(5, -50, 3000);
+            chassis.turnToHeading(-90, 1000);
+            chassis.moveToPoint(-12, -50, 1000,{.minSpeed=100});
+            pros::delay(3000);
+            chassis.moveToPoint(1, -50, 1000,{.forwards=false});
+            chassis.moveToPoint(-12, -50, 1000,{.minSpeed=100});
+            pros::delay(3000);
+
+
+
+
             break;
         default: 
             break;

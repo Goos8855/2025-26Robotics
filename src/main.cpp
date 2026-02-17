@@ -23,6 +23,7 @@
 #include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
 #include "pros/screen.hpp"
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <string>
@@ -147,74 +148,123 @@ void runSelectedAuton(){
     switch (selectedAUton) {
         case AUTON_LEFT: //tested and has hit once: Scores 2-4 blocks on long goal, then scores 1-2 on mid goal
             elevate.set_value(false);
-            chassis.moveToPose(1.16, 38.52, 1.33, 2000,{.minSpeed=70},false);
+            chassis.moveToPose(1.16, 38.52, 1.33, 2000,{.minSpeed=80},false);
             ext.set_value(true);
             chassis.turnToHeading(-90, 2000,{},false);
             chassis.moveToPoint(-15, 38.57, 1000,{.minSpeed=120},false);
             intake.move(127);
             pros::delay(750);
             chassis.moveToPoint(5, 38.52, 1000, {.forwards=false});
-            pros::delay(500);
-            chassis.moveToPoint(-5, 38.52, 2000,{.maxSpeed=30});
-            pros::delay(2000);
+
+            chassis.moveToPoint(-5, 38.52, 2000,{.maxSpeed=127});
             
-            chassis.turnToHeading(86, 1000,{},false);
+            chassis.turnToHeading(90, 1000,{},false);
             ext.set_value(false);
             pros::delay(250);
-            chassis.moveToPoint(17.3, 37.51, 1000,{},false);
-            chassis.turnToHeading(86, 500);
+            chassis.moveToPoint(15.8, 38.52, 1000,{},false);
+            chassis.turnToHeading(90, 500);
             upperIntake.move(127);
             rotateIntake.move(127);
-            pros::delay(4000);
+            pros::delay(2000);
             upperIntake.move(0);
             elevate.set_value(true);
-            chassis.moveToPoint(0, 37.51, 1000,{.forwards=false});
-            chassis.moveToPose(35.24, 5.05, 135, 5000);
+            rotateIntake.move((-127));
+            chassis.moveToPoint(0, 37.51, 1000,{.forwards=false,.minSpeed=100});
+            chassis.moveToPoint(17, 18, 1000);
+            chassis.turnToHeading(135, 1000);
+            chassis.moveToPoint(32, 3 , 5000,{.minSpeed=50});
             upperIntake.move(127);
             
             
             break;
         case AUTON_RIGHT: //tested and works: Scores one on low goal and moves to match loader
-            chassis.moveToPoint(0, 48, 5000,{.maxSpeed=40},false);
-            chassis.moveToPose(0, 52.49, -45, 3000,{.maxSpeed=40});
-            intake.move_velocity(-127);
-            pros::delay(3000);
-            intake.move(-100);
-            chassis.moveToPoint(-3.5, 52, 2000);
-            chassis.moveToPoint(32.55, 14.92, 2000,{.forwards=false});
-            chassis.turnToHeading(-180, 1000);
-            ext.set_value(false);
+
+            chassis.moveToPoint(1.21, 36.72, 2000);
+            chassis.turnToHeading(90, 1000);
+            ext.set_value(true);
             intake.move(127);
-            chassis.moveToPoint(32.93, -1, 2000,{.minSpeed=100});
+            chassis.moveToPoint(12, 37.81, 1000,{.minSpeed=100});
+            pros::delay(1500);
+            chassis.moveToPoint(1.21, 37.72, 1000,{.forwards=false});
+            chassis.turnToHeading(90, 1000);
+            ext.set_value(false);
+            chassis.moveToPoint(-13.5, 37, 1000);
+            elevate.set_value(true);
+            intake.move(127);
+            upperIntake.move(127);
+            rotateIntake.move(127);
+
+            
+
+            
             break;
         case AUTON_SKILLS: //Kinda works, the middle part could hit if it lands in the right way
             intake.move(127);
             upperIntake.move(127);
             elevate.set_value(false);
             ext.set_value(true);
-            chassis.moveToPoint(0, 49, 2000);
+            chassis.moveToPoint(0, 52, 5000);
             chassis.turnToHeading(-90, 1000);
-            chassis.moveToPose(-20, 49, -90, 1500,{.minSpeed=100});
+            chassis.moveToPose(-20, 52, -90, 5000,{.minSpeed=100});
             pros::delay(3000);
-            chassis.moveToPoint(0, 49, 2000,{.forwards=false});
-            chassis.moveToPose(-20, 49, -90, 1500,{.minSpeed=100});
-            pros::delay(3000);
+            chassis.moveToPoint(0, 52, 2000,{.forwards=false});
+            chassis.moveToPose(-20, 52, -90, 1500,{.minSpeed=100});
+            pros::delay(4000);
             chassis.moveToPoint(8, 50, 1000,{.forwards=false});
             ext.set_value(false);
             intake.move(-127);
             upperIntake.move(-127);
             pros::delay(3000);
-            chassis.turnToHeading(180, 1000);
+            chassis.turnToHeading(0, 1000);
+            chassis.moveToPoint(5, -50, 3000,{.forwards=false});
+            chassis.turnToHeading(-90, 1000);
             ext.set_value(true);
             intake.move(127);
             upperIntake.move(127);
-            chassis.moveToPoint(5, -50, 3000);
-            chassis.turnToHeading(-90, 1000);
             chassis.moveToPoint(-12, -50, 1000,{.minSpeed=100});
             pros::delay(3000);
             chassis.moveToPoint(1, -50, 1000,{.forwards=false});
             chassis.moveToPoint(-12, -50, 1000,{.minSpeed=100});
             pros::delay(3000);
+            chassis.moveToPoint(1, -50, 1000,{.forwards=false});
+            ext.set_value(false);
+            intake.move(-127);
+            upperIntake.move(-127);
+            rotateIntake.move(-127);
+            chassis.turnToHeading(0, 1000);
+            chassis.moveToPoint(23.88, -25.23, 3000);
+            chassis.turnToHeading(-90, 1000);
+            chassis.moveToPoint(90.03, -28.38, 3000,{.forwards=false});
+            chassis.turnToHeading(133.99, 1000);
+            chassis.moveToPoint(95.65, -52.51, 2000);
+            chassis.turnToHeading(90, 1000);
+            ext.set_value(true);
+            upintake.move(127);
+            intake.move(127);
+            rotateIntake.move(127);
+            chassis.moveToPoint(120.19, -51.69, 1000,{.minSpeed=100});
+            pros::delay(3000);
+            chassis.moveToPoint(95, -51.69, 1000,{.forwards=false});
+            chassis.moveToPoint(120.19, -51.69, 1000,{.minSpeed=100});
+            pros::delay(6000);
+            chassis.moveToPoint(95, -50.69, 1000,{.forwards=false});
+            leftDT.move(-127);
+            rightDT.move(-127);
+            ext.set_value(false);
+            chassis.moveToPoint(90, -28, 2000,{.forwards=false});
+            chassis.moveToPoint(0, -28, 3000,{.forwards=false});
+            //fix this part (actually test first cause I changed some stuff)
+            chassis.moveToPoint(20, -3, 2000);
+            pros::delay(500);
+            chassis.turnToHeading(90, 2000);
+            pros::delay(500);
+            chassis.moveToPoint(-200, -3, 5000, {.minSpeed=127});
+            //chassis.setPose(0,0,0);
+            //pros::delay(1000);
+            //chassis.moveToPoint(0, 100, 3000,{.minSpeed=100});
+            //leftDT.move(-127); 
+            //rightDT.move(-127);
+
 
 
 

@@ -139,14 +139,14 @@ static void autonTest(lv_event_t* e){
     runGuiAuton = true;
 }
 
-ASSET(bl_txt);
+ASSET(bl_txt); //doesnt work
 
 void runSelectedAuton(){
     ext.set_value(false);
     elevate.set_value(true);
 
     switch (selectedAUton) {
-        case AUTON_LEFT: //tested and has hit once: Scores 2-4 blocks on long goal, then scores 1-2 on mid goal
+        case AUTON_LEFT: //probably works, I don't even remember what this does anymore (I think its 1-2 high, match load, and 1-2 mid)
             elevate.set_value(false);
             chassis.moveToPose(1.16, 38.52, 1.33, 2000,{.minSpeed=80},false);
             ext.set_value(true);
@@ -198,7 +198,7 @@ void runSelectedAuton(){
 
             
             break;
-        case AUTON_SKILLS: //Kinda works, the middle part could hit if it lands in the right way
+        case AUTON_SKILLS: //match loaders hit (for the most part) and just need to fix parking part
             intake.move(127);
             upperIntake.move(127);
             elevate.set_value(false);
@@ -462,19 +462,19 @@ void opcontrol() {
     bool up = false;
     bool extract = false;
     int count = 0;
-    while (true) {
+    while (true) { //loop to update screen
         count += 1;
         if(count > 5){
             count = 0;
             master.set_text(0,0, autonNames[selectedAUton]);
         }
         
-        if(runGuiAuton && !autonActive){
+        if(runGuiAuton && !autonActive){ //dont change any of this
             autonActive = true;
             runGuiAuton = false;
             runSelectedAuton();
             autonActive = false;
-            if(selectedAUton==AUTON_SKILLS){
+            if(selectedAUton==AUTON_SKILLS){ 
                 pros::delay(90000);
             } else {
                 pros::delay(15000);
@@ -482,14 +482,14 @@ void opcontrol() {
                 
         }
         if(!autonActive){
-            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*1.3;
+            int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*1.3; //number = sensitivity multiplier
             int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*1.3;
             chassis.arcade(leftY, leftX);
 
             int intakeSpd = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
             intake.move(intakeSpd);
 
-            if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){
+            if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){ //dont change this
                 master.clear_line(0);
                 selectedAUton = (selectedAUton-1+AUTON_COUNT)%AUTON_COUNT;
                 lv_label_set_text_static(autonNameLabel, autonNames[selectedAUton]);

@@ -1,3 +1,4 @@
+// 0_0
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
@@ -155,9 +156,7 @@ void runSelectedAuton(){
             intake.move(127);
             pros::delay(750);
             chassis.moveToPoint(5, 38.52, 1000, {.forwards=false});
-
             chassis.moveToPoint(-5, 38.52, 2000,{.maxSpeed=127});
-            
             chassis.turnToHeading(90, 1000,{},false);
             ext.set_value(false);
             pros::delay(250);
@@ -227,11 +226,11 @@ void runSelectedAuton(){
             chassis.moveToPoint(-12, -50, 1000,{.minSpeed=100});
             pros::delay(3000);
             chassis.moveToPoint(1, -50, 1000,{.forwards=false});
-            ext.set_value(false);
             intake.move(-127);
             upperIntake.move(-127);
             rotateIntake.move(-127);
             chassis.turnToHeading(0, 1000);
+            ext.set_value(false);
             chassis.moveToPoint(23.88, -25.23, 3000);
             chassis.turnToHeading(-90, 1000);
             chassis.moveToPoint(90.03, -28.38, 3000,{.forwards=false});
@@ -254,11 +253,12 @@ void runSelectedAuton(){
             chassis.moveToPoint(90, -28, 2000,{.forwards=false});
             chassis.moveToPoint(0, -28, 3000,{.forwards=false});
             //fix this part (actually test first cause I changed some stuff)
-            chassis.moveToPoint(20, -3, 2000);
+            chassis.moveToPoint(20, 5, 2000);
             pros::delay(500);
-            chassis.turnToHeading(90, 2000);
-            pros::delay(500);
-            chassis.moveToPoint(-200, -3, 5000, {.minSpeed=127});
+            chassis.turnToHeading(90, 3000);
+            pros::delay(1000);
+            chassis.setPose(0,0,0);
+            chassis.moveToPoint(-1, -100, 5000, {.forwards=false,.minSpeed=1000});
             //chassis.setPose(0,0,0);
             //pros::delay(1000);
             //chassis.moveToPoint(0, 100, 3000,{.minSpeed=100});
